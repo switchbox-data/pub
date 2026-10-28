@@ -5,23 +5,32 @@
 <title>Switchbox source</title>
 <meta name="robots" content="noindex">
 <script>
-  var LINKS = {"test": "https://switch.box/"};
-  var key = decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
-  var target = LINKS[key];
-  if (target) { location.replace(target); }
+  var LINKS = {"test": "https://switch.box/", "test_batch_a_191110": "https://switch.box/", "test_batch_b_191110": "https://switch.box/about"};
+  var key = "";
+  try { key = decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, "")); } catch (e) {}
+  var target = Object.prototype.hasOwnProperty.call(LINKS, key) ? LINKS[key] : null;
+  if (target && /^https?:\/\//i.test(target)) { location.replace(target); }
 </script>
 <style>body{font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;color:#023047}</style>
 </head>
 <body>
 <noscript><p>This short link needs JavaScript to forward you. See <a href="links.json">the list of links</a>.</p></noscript>
-<p id="msg">Forwarding&hellip;</p>
+<p id="msg"></p>
 <script>
-  if (!target) {
-    document.getElementById("msg").innerHTML =
-      'No source found at this link. Visit <a href="https://switch.box/">switch.box</a>.';
+  var msg = document.getElementById("msg");
+  var a = document.createElement("a");
+  if (target && /^https?:\/\//i.test(target)) {
+    msg.appendChild(document.createTextNode("Forwarding to "));
+    a.href = target;
+    a.textContent = target;
+    msg.appendChild(a);
+    msg.appendChild(document.createTextNode("\u2026"));
   } else {
-    document.getElementById("msg").innerHTML =
-      'Forwarding to <a href="' + target + '">' + target + '</a>&hellip;';
+    msg.appendChild(document.createTextNode("No source found at this link. Visit "));
+    a.href = "https://switch.box/";
+    a.textContent = "switch.box";
+    msg.appendChild(a);
+    msg.appendChild(document.createTextNode("."));
   }
 </script>
 </body>
