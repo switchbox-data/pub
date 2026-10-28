@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Switchbox source</title>
+<meta name="robots" content="noindex">
+<script>
+  var LINKS = {"test": "https://switch.box/"};
+  var key = decodeURIComponent(location.pathname.replace(/^\/+|\/+$/g, ""));
+  var target = LINKS[key];
+  if (target) { location.replace(target); }
+</script>
+<style>body{font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;color:#023047}</style>
+</head>
+<body>
+<noscript><p>This short link needs JavaScript to forward you. See <a href="links.json">the list of links</a>.</p></noscript>
+<p id="msg">Forwarding&hellip;</p>
+<script>
+  if (!target) {
+    document.getElementById("msg").innerHTML =
+      'No source found at this link. Visit <a href="https://switch.box/">switch.box</a>.';
+  } else {
+    document.getElementById("msg").innerHTML =
+      'Forwarding to <a href="' + target + '">' + target + '</a>&hellip;';
+  }
+</script>
+</body>
+</html>
