@@ -2,10 +2,106 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Switchbox sources</title>
-<meta http-equiv="refresh" content="0; url=https://switch.box/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>All Switchbox short links</title>
+<style>
+  body { font-family: system-ui, sans-serif; color: #023047; margin: 2rem auto; max-width: 80rem; padding: 0 1rem; }
+  h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  p.meta { color: #555; margin-top: 0; }
+  input { font: inherit; padding: 0.4rem 0.6rem; width: 24rem; max-width: 100%; margin: 0.5rem 0 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid #e3e8ec; vertical-align: top; }
+  th { position: sticky; top: 0; background: #fff; cursor: pointer; user-select: none; }
+  td.dest { word-break: break-all; color: #555; }
+  td.num { color: #888; }
+  a { color: #0b6e99; }
+  .host { white-space: nowrap; font-size: 0.8rem; padding: 0.1rem 0.4rem; border-radius: 0.3rem; background: #eef4f7; }
+</style>
 </head>
 <body>
-<p>Short links for sources cited in <a href="https://switch.box/">Switchbox</a> reports.</p>
+<h1>All Switchbox short links</h1>
+<p class="meta" id="meta">Loading links.json&hellip;</p>
+<input id="q" type="search" placeholder="Filter by key, organization, year or destination" autofocus>
+<table>
+  <thead><tr>
+    <th data-col="i">#</th>
+    <th data-col="key">Short link</th>
+    <th data-col="org">Org</th>
+    <th data-col="year">Year</th>
+    <th data-col="host">Hosted on</th>
+    <th data-col="target">Destination</th>
+  </tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<script>
+  // Built with DOM calls only (no innerHTML), and only http(s) destinations become links.
+  var HOSTS = {
+    "www.documentcloud.org": "DocumentCloud",
+    "drive.google.com": "Google Drive",
+    "docs.google.com": "Google Drive",
+    "web.archive.org": "Wayback Machine",
+    "doi.org": "DOI"
+  };
+  var rows = [], sortCol = "key", sortDir = 1;
+
+  function cell(tr, text, cls) {
+    var td = document.createElement("td");
+    if (cls) td.className = cls;
+    if (text instanceof Node) td.appendChild(text); else td.textContent = text;
+    tr.appendChild(td);
+  }
+  function link(href, text) {
+    if (!/^https?:\/\//i.test(href)) return document.createTextNode(text);
+    var a = document.createElement("a");
+    a.href = href; a.textContent = text; a.target = "_blank"; a.rel = "noopener";
+    return a;
+  }
+  function render() {
+    var q = document.getElementById("q").value.trim().toLowerCase();
+    var shown = rows.filter(function (r) { return !q || r.haystack.indexOf(q) !== -1; });
+    shown.sort(function (a, b) { return a[sortCol] < b[sortCol] ? -sortDir : a[sortCol] > b[sortCol] ? sortDir : 0; });
+    var body = document.getElementById("rows");
+    body.textContent = "";
+    shown.forEach(function (r, n) {
+      var tr = document.createElement("tr");
+      cell(tr, String(n + 1), "num");
+      cell(tr, link(location.origin + "/" + encodeURIComponent(r.key), r.key));
+      cell(tr, r.org);
+      cell(tr, r.year);
+      var span = document.createElement("span"); span.className = "host"; span.textContent = r.host;
+      cell(tr, span);
+      cell(tr, link(r.target, r.target), "dest");
+      body.appendChild(tr);
+    });
+    document.getElementById("meta").textContent =
+      shown.length + " of " + rows.length + " short links. Click a short link to test it (opens in a new tab); " +
+      "click a column header to sort. Source: links.json.";
+  }
+
+  document.querySelectorAll("th[data-col]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var col = th.getAttribute("data-col");
+      sortDir = col === sortCol ? -sortDir : 1; sortCol = col; render();
+    });
+  });
+  document.getElementById("q").addEventListener("input", render);
+
+  fetch("/links.json", { cache: "no-store" })
+    .then(function (r) { return r.json(); })
+    .then(function (links) {
+      rows = Object.keys(links).map(function (key, i) {
+        var target = String(links[key]), host = "";
+        try { host = new URL(target).hostname; } catch (e) {}
+        var m = key.match(/^([^_]+)_.*?(\d{4})[a-z]{0,2}$/);
+        var r = { i: i, key: key, target: target, org: m ? m[1] : "", year: m ? m[2] : "",
+                  host: HOSTS[host] || host || "?" };
+        r.haystack = (key + " " + target + " " + r.host).toLowerCase();
+        return r;
+      });
+      render();
+    })
+    .catch(function (e) { document.getElementById("meta").textContent = "Could not load links.json: " + e; });
+</script>
 </body>
 </html>
